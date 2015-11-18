@@ -114,7 +114,6 @@ shinyUI(
 
 ```{r, eval = FALSE}
 library(shiny)
-
 # Define server logic required to generate and plot a random distribution
 shinyServer(
   function(input, output) {
@@ -135,6 +134,14 @@ shinyServer(
   - Controls buttons, messages, menus etc.
   - Can be built without any HTML, CSS or Javascript knowledge.
 * Server function take input from UI and has full access to R packages.
+
+***
+
+## Shiny design flow 2
+* New data entered from UI is automatically detected.
+* New data prompts an internal update.
+* All functions and plots using this data are regenerated.
+* This is done automatically using reactively.
 
 ***
 
@@ -165,26 +172,138 @@ What is the value of `B` at the end of this code segment?
   - Reactive endpoint displays result to user.
   - Example: Plot data after processing.
 
+--- &vertical
+
+## More complicated example
+
+ui.R
+
+```{r, eval = FALSE}
+library(shiny)
+shinyUI(
+  fluidPage(
+    titlePanel("Weather Plotter"),
+    column(4,
+      textInput(
+        inputId = "location_id",
+        label = "Enter location: ",
+        value = "California/San_Diego"
+      ),
+      actionButton(
+        inputId = "submit_loc",
+        label = "Submit"
+      )
+    ),
+    column(8,
+      dygraphs::dygraphOutput("dygraph1")
+    )
+  )
+)
+```
+
 ***
 
 ## More complicated example
 
+Server.R
+
+```{r, eval = FALSE}
+library(shiny)
+shinyServer(
+  function(input, output, session) {
+    rv_data = reactiveValues(
+      forecast_xts = NULL
+    )
+
+    observeEvent(
+      eventExpr = input[["submit_loc"]],
+      handlerExpr = {
+        data = rwunderground::hourly10day(input[["location_id"]])
+        data_temp = data["temp"]
+        forecast_xts = xts::xts(data_temp, order.by = data$date)
+        rv_data$forecast_xts = forecast_xts
+      }
+    )
+
+    rct_get_data = reactive({
+      validate(
+        need(rv_data$forecast_xts, "Please query data from server")
+      )
+      rv_data$forecast_xts
+    })
+
+    output[["dygraph1"]] = renderDygraph({
+      dygraphs::dygraph(rct_get_data())
+    })
+  }
+)
+```
+***
+## Server and UI Design
+* UI does not contain any functions that process data.
+* Server function has `input` and `output` parameters.
+  - These are `reactiveValues` -- lists of reactive types.
+  - `input` is a reactiveValues list for data from the UI.
+  - `output` is a reactiveValues list with plots and output for the UI.
+
 ***
 
 ## Reactive Types
-* Reactive Source
-* Reactive Conductor
-* Reactive Endpoint
 
-***
+```{r, eval=FALSE}
+shinyServer(
+  function(input, output, session) {
+```
+* Reactive Source:
+  - `input`: `reactiveValues` list from UI
+* Reactive Endpoint:
+  - `output`: `reactiveValues` list to UI
+* `Session` contains other metadata for shiny
 
-## Continue Example/New Example
+*** 
 
-* Reactive Diagrams
+## Reactive Types
+
+```{r, eval=FALSE}
+    rct_get_data = reactive({
+      validate(
+        need(rv_data$forecast_xts, "Please query data from server")
+      )
+      print("test")
+      rv_data$forecast_xts
+    })
+```
+Reactive Conductor:
+* `rct_get_data`: `reactive` is a type of reactive function.  
+* This function will run any time any of the reactive expressions inside the function change.
+* In above example, this will detect when new time series data is available, validate the data and return it.
+
+*** 
+
+## Reactive Types
+
+```{r, eval=FALSE}
+    observeEvent(
+      eventExpr = input[["submit_loc"]],
+      handlerExpr = {
+        data = rwunderground::hourly10day(input[["location_id"]])
+        data_temp = data["temp"]
+        forecast_xts = xts::xts(data_temp, order.by = data$date)
+        rv_data$forecast_xts = forecast_xts
+      }
+    )
+```
+Reactive Observers:
+* Similar to `reactive` functions but they are not a function and thus have no return output.  
+* Good way to update a reactiveValue based on a trigger (in this case button push).
 
 --- &vertical
 
 ## Input Controls
+
+```{r, eval=FALSE}
+library(shiny)
+```
 
 ***
 

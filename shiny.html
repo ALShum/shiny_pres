@@ -155,7 +155,6 @@ shinyUI(
     <h2>Simple example Server Code</h2>
 
 <pre><code class="r">library(shiny)
-
 # Define server logic required to generate and plot a random distribution
 shinyServer(
   function(input, output) {
@@ -184,6 +183,20 @@ shinyServer(
 <li>Can be built without any HTML, CSS or Javascript knowledge.</li>
 </ul></li>
 <li>Server function take input from UI and has full access to R packages.</li>
+</ul>
+
+    <aside class='notes'>
+      
+    </aside>
+   </section>
+   <section class='' data-state=''>
+    <h2>Shiny design flow 2</h2>
+
+<ul>
+<li>New data entered from UI is automatically detected.</li>
+<li>New data prompts an internal update.</li>
+<li>All functions and plots using this data are regenerated.</li>
+<li>This is done automatically using reactively.</li>
 </ul>
 
     <aside class='notes'>
@@ -237,8 +250,91 @@ A = 200
       
     </aside>
    </section>
+</section>
+<section>
    <section class='' data-state=''>
     <h2>More complicated example</h2>
+    <p>ui.R</p>
+
+<pre><code class="r">library(shiny)
+shinyUI(
+  fluidPage(
+    titlePanel(&quot;Weather Plotter&quot;),
+    column(4,
+      textInput(
+        inputId = &quot;location_id&quot;,
+        label = &quot;Enter location: &quot;,
+        value = &quot;California/San_Diego&quot;
+      ),
+      actionButton(
+        inputId = &quot;submit_loc&quot;,
+        label = &quot;Submit&quot;
+      )
+    ),
+    column(8,
+      dygraphs::dygraphOutput(&quot;dygraph1&quot;)
+    )
+  )
+)
+</code></pre>
+
+    <aside class='notes'>
+      
+    </aside>
+   </section>
+   <section class='' data-state=''>
+    <h2>More complicated example</h2>
+
+<p>Server.R</p>
+
+<pre><code class="r">library(shiny)
+shinyServer(
+  function(input, output, session) {
+    rv_data = reactiveValues(
+      forecast_xts = NULL
+    )
+
+    observeEvent(
+      eventExpr = input[[&quot;submit_loc&quot;]],
+      handlerExpr = {
+        data = rwunderground::hourly10day(input[[&quot;location_id&quot;]])
+        data_temp = data[&quot;temp&quot;]
+        forecast_xts = xts::xts(data_temp, order.by = data$date)
+        rv_data$forecast_xts = forecast_xts
+      }
+    )
+
+    rct_get_data = reactive({
+      validate(
+        need(rv_data$forecast_xts, &quot;Please query data from server&quot;)
+      )
+      rv_data$forecast_xts
+    })
+
+    output[[&quot;dygraph1&quot;]] = renderDygraph({
+      dygraphs::dygraph(rct_get_data())
+    })
+  }
+)
+</code></pre>
+
+    <aside class='notes'>
+      
+    </aside>
+   </section>
+   <section class='' data-state=''>
+    <h2>Server and UI Design</h2>
+
+<ul>
+<li>UI does not contain any functions that process data.</li>
+<li>Server function has <code>input</code> and <code>output</code> parameters.
+
+<ul>
+<li>These are <code>reactiveValues</code> -- lists of reactive types.</li>
+<li><code>input</code> is a reactiveValues list for data from the UI.</li>
+<li><code>output</code> is a reactiveValues list with plots and output for the UI.</li>
+</ul></li>
+</ul>
 
     <aside class='notes'>
       
@@ -247,10 +343,22 @@ A = 200
    <section class='' data-state=''>
     <h2>Reactive Types</h2>
 
+<pre><code class="r">shinyServer(
+  function(input, output, session) {
+</code></pre>
+
 <ul>
-<li>Reactive Source</li>
-<li>Reactive Conductor</li>
-<li>Reactive Endpoint</li>
+<li>Reactive Source:
+
+<ul>
+<li><code>input</code>: <code>reactiveValues</code> list from UI</li>
+</ul></li>
+<li>Reactive Endpoint:
+
+<ul>
+<li><code>output</code>: <code>reactiveValues</code> list to UI</li>
+</ul></li>
+<li><code>Session</code> contains other metadata for shiny</li>
 </ul>
 
     <aside class='notes'>
@@ -258,10 +366,48 @@ A = 200
     </aside>
    </section>
    <section class='' data-state=''>
-    <h2>Continue Example/New Example</h2>
+    <h2>Reactive Types</h2>
+
+<pre><code class="r">    rct_get_data = reactive({
+      validate(
+        need(rv_data$forecast_xts, &quot;Please query data from server&quot;)
+      )
+      print(&quot;test&quot;)
+      rv_data$forecast_xts
+    })
+</code></pre>
+
+<p>Reactive Conductor:</p>
 
 <ul>
-<li>Reactive Diagrams</li>
+<li><code>rct_get_data</code>: <code>reactive</code> is a type of reactive function.<br></li>
+<li>This function will run any time any of the reactive expressions inside the function change.</li>
+<li>In above example, this will detect when new time series data is available, validate the data and return it.</li>
+</ul>
+
+    <aside class='notes'>
+      
+    </aside>
+   </section>
+   <section class='' data-state=''>
+    <h2>Reactive Types</h2>
+
+<pre><code class="r">    observeEvent(
+      eventExpr = input[[&quot;submit_loc&quot;]],
+      handlerExpr = {
+        data = rwunderground::hourly10day(input[[&quot;location_id&quot;]])
+        data_temp = data[&quot;temp&quot;]
+        forecast_xts = xts::xts(data_temp, order.by = data$date)
+        rv_data$forecast_xts = forecast_xts
+      }
+    )
+</code></pre>
+
+<p>Reactive Observers:</p>
+
+<ul>
+<li>Similar to <code>reactive</code> functions but they are not a function and thus have no return output.<br></li>
+<li>Good way to update a reactiveValue based on a trigger (in this case button push).</li>
 </ul>
 
     <aside class='notes'>
@@ -272,7 +418,9 @@ A = 200
 <section>
    <section class='' data-state=''>
     <h2>Input Controls</h2>
-    
+    <pre><code class="r">library(shiny)
+</code></pre>
+
     <aside class='notes'>
       
     </aside>
@@ -308,7 +456,7 @@ A = 200
     </aside>
    </section>
 </section>
-<section class='' data-state='' id='slide-8'>
+<section class='' data-state='' id='slide-9'>
   <h2>Advanced Server Issues</h2>
   <ul>
 <li>User authentication</li>
@@ -316,7 +464,7 @@ A = 200
 </ul>
 
 </section>
-<section class='' data-state='' id='slide-9'>
+<section class='' data-state='' id='slide-10'>
   <h2>END</h2>
   <p><img src="Ice_King.png" alt="ik" style="width: 250px;"/></p>
 
