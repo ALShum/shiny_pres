@@ -22,7 +22,7 @@ shinyServer(
       rv_data$forecast_xts
     })
 
-    output[["dygraph1"]] = renderDygraph({
+    output[["dygraph1"]] = dygraphs::renderDygraph({
       dygraphs::dygraph(rct_get_data())
     })
   }
