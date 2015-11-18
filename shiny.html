@@ -368,6 +368,59 @@ shinyServer(
    <section class='' data-state=''>
     <h2>Reactive Types</h2>
 
+<pre><code class="r"># from UI
+  textInput(
+    inputId = &quot;location_id&quot;,
+    label = &quot;Enter location: &quot;,
+    value = &quot;California/San_Diego&quot;
+  ),
+  actionButton(
+    inputId = &quot;submit_loc&quot;,
+    label = &quot;Submit&quot;
+  )
+</code></pre>
+
+<ul>
+<li>Reactive Source (from UI):
+
+<ul>
+<li>These will send values to the server from UI.</li>
+</ul></li>
+</ul>
+
+    <aside class='notes'>
+      
+    </aside>
+   </section>
+   <section class='' data-state=''>
+    <h2>Reactive Types</h2>
+
+<pre><code class="r"># from UI
+    column(8,
+      dygraphs::dygraphOutput(&quot;dygraph1&quot;)
+    )
+
+# from server
+    output[[&quot;dygraph1&quot;]] = renderDygraph({
+      dygraphs::dygraph(rct_get_data())
+    })
+</code></pre>
+
+<ul>
+<li>Reactive end points
+
+<ul>
+<li>The reactive endpoint code in UI will have corresponding code in server.</li>
+</ul></li>
+</ul>
+
+    <aside class='notes'>
+      
+    </aside>
+   </section>
+   <section class='' data-state=''>
+    <h2>Reactive Types</h2>
+
 <pre><code class="r">    rct_get_data = reactive({
       validate(
         need(rv_data$forecast_xts, &quot;Please query data from server&quot;)
@@ -408,6 +461,27 @@ shinyServer(
 <ul>
 <li>Similar to <code>reactive</code> functions but they are not a function and thus have no return output.<br></li>
 <li>Good way to update a reactiveValue based on a trigger (in this case button push).</li>
+</ul>
+
+    <aside class='notes'>
+      
+    </aside>
+   </section>
+   <section class='' data-state=''>
+    <h2>Final Notes</h2>
+
+<ul>
+<li>Reactive values must be handled in a &quot;reactive context&quot;.
+
+<ul>
+<li>Reactive contexts include observers, reactive functions and reactive end points.</li>
+</ul></li>
+<li>Helper functions and objects can be defined outside of shiny.
+
+<ul>
+<li>These functions will run once when the server first starts.</li>
+</ul></li>
+<li>Reactive code will rerun whenever the input changes.</li>
 </ul>
 
     <aside class='notes'>
@@ -457,12 +531,8 @@ shinyServer(
    </section>
 </section>
 <section class='' data-state='' id='slide-9'>
-  <h2>Advanced Server Issues</h2>
-  <ul>
-<li>User authentication</li>
-<li>Handling multiple users</li>
-</ul>
-
+  
+  
 </section>
 <section class='' data-state='' id='slide-10'>
   <h2>END</h2>

@@ -265,6 +265,45 @@ shinyServer(
 ## Reactive Types
 
 ```{r, eval=FALSE}
+# from UI
+  textInput(
+    inputId = "location_id",
+    label = "Enter location: ",
+    value = "California/San_Diego"
+  ),
+  actionButton(
+    inputId = "submit_loc",
+    label = "Submit"
+  )
+```
+
+* Reactive Source (from UI):
+  - These will send values to the server from UI.
+
+***
+
+## Reactive Types
+
+```{r, eval=FALSE}
+# from UI
+    column(8,
+      dygraphs::dygraphOutput("dygraph1")
+    )
+
+# from server
+    output[["dygraph1"]] = renderDygraph({
+      dygraphs::dygraph(rct_get_data())
+    })
+```
+
+* Reactive end points
+  - The reactive endpoint code in UI will have corresponding code in server.
+
+***
+
+## Reactive Types
+
+```{r, eval=FALSE}
     rct_get_data = reactive({
       validate(
         need(rv_data$forecast_xts, "Please query data from server")
@@ -297,6 +336,17 @@ Reactive Observers:
 * Similar to `reactive` functions but they are not a function and thus have no return output.  
 * Good way to update a reactiveValue based on a trigger (in this case button push).
 
+***
+
+## Final Notes
+
+* Reactive values must be handled in a "reactive context".
+  - Reactive contexts include observers, reactive functions and reactive end points.
+* Helper functions and objects can be defined outside of shiny.
+  - These functions will run once when the server first starts.
+* Reactive code will rerun whenever the input changes.
+ 
+
 --- &vertical
 
 ## Input Controls
@@ -322,11 +372,6 @@ library(shiny)
 ## Step by step coding
 
 --- 
-
-## Advanced Server Issues
-
-* User authentication
-* Handling multiple users
 
 ---
 
