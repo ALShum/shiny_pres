@@ -361,28 +361,15 @@ Reactive Observers:
 
 ## Input Controls
 
-
-```r
-library(shiny)
-```
+* Support for text/numeric input, sliders, checkboxes, drop down menus, multi-selection
+* See gallery: http://shiny.rstudio.com/gallery/widget-gallery.html
 
 ***
 
 ## Output Display Types
 
---- &vertical
-
-## Step by step coding
-
-***
-
-## Step by step coding
-
-***
-
-## Step by step coding
-
---- 
+* Support for the following output types: text, image, plots, tables.
+* Example of data table: http://shiny.rstudio.com/articles/datatables.html
 
 ---
 
